@@ -1,2 +1,7 @@
 matmul_serial
 matmul_parallel
+*.zst
+*.csv
+*.pdf
+*.json
+
