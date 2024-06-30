@@ -1,10 +1,10 @@
 all: serial parallel
 
 serial:
-	gcc -std=c99 -o matmul_serial matmul_serial.c
+	gcc -std=c99 -o main_serial main_serial.c
 
 parallel:
-	gcc -std=c99 -o matmul_parallel matmul_parallel.c -lpthread
+	gcc -std=c99 -o main_parallel main_parallel.c -lpthread
 
 clean:
-	rm matmul_serial matmul_parallel
+	rm main_serial main_parallel

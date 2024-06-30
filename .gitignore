@@ -1,5 +1,6 @@
 matmul_serial
 matmul_parallel
+.repoid
 *.zst
 *.csv
 *.pdf
