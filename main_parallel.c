@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include <pthread.h>
+#include <thpool.h>
 
 // ---- thread management code start ----
 
@@ -16,7 +16,7 @@ struct MultData{
 
 void mult(double ** a, double ** b, double ** res, int r, int c, int rStart, int rEnd);
 
-void * mult_wrapper(void * data){
+void worker(void * data){
   double ** a      = ((struct MultData *)data)->a;
   double ** b      = ((struct MultData *)data)->b;
   double ** res    = ((struct MultData *)data)->res;
@@ -37,9 +37,7 @@ void * mult_wrapper(void * data){
   mult(a, b, res, r, c, rStart, rEnd);
 }
 
-void mult_parallel(double ** a, double ** b, double ** res, int r, int c, int pe){
-
-  pthread_t tid[pe];
+void mult_parallel(double ** a, double ** b, double ** res, int r, int c, int pe, threadpool thpool){
 
   for(int i=0;i<pe;i++){
     struct MultData * mData = (struct MultData *)malloc(sizeof(struct MultData));
@@ -51,12 +49,10 @@ void mult_parallel(double ** a, double ** b, double ** res, int r, int c, int pe
     mData->rStart = (r/pe) * i;
     mData->rEnd   = (r/pe) * (i+1);
 
-    pthread_create(&tid[i], NULL, mult_wrapper, (void *)mData);
+    thpool_add_work(thpool, worker, (void *)mData);
   }
 
-  for(int i=0;i<pe;i++){
-    pthread_join(tid[i], NULL);
-  }
+  thpool_wait(thpool);
 }
 // ---- thread management code end ----
 
@@ -113,6 +109,9 @@ int main(int argc, char * argv[]){
   int c    = atoi(argv[2]);
   int core = atoi(argv[3]);
 
+  // thread pool
+  threadpool thpool = thpool_init(core);
+
   double ** a   = allocateMatrix(r, c);
   double ** b   = allocateMatrix(r, c);
   double ** res = allocateMatrix(r, c);
@@ -133,13 +132,15 @@ int main(int argc, char * argv[]){
   print(b, r, c);
 
   //  mult(a, b, res, r, c);
-  mult_parallel(a, b, res, r, c, core);
+  mult_parallel(a, b, res, r, c, core, thpool);
 
   print(res, r, c);
 
   freeMatrix(a, r);
   freeMatrix(b, r);
   freeMatrix(res, r);
+
+  thpool_destroy(thpool);
 
   return 0;
 }
