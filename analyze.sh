@@ -2,12 +2,12 @@
 
 usage()
 {
-  echo "Usage: $0 <serial algorithm> <parallel algirithm> <iva> <iva data> <iva data file> <core count file> <time serial analytics file> <time parallel analytics file> <space serial analytics file> <space parallel analytics file> <power serial analytics file> <power parallel analytics file> <energy serial analytics file> <energy parallel analytics file> <speedup analytics file> <freeup analytics file> <powerup analytics file> <energyup analytics file>"
+  echo "Usage: $0 <serial algorithm> <parallel algirithm> <iva> <iva data> <iva data file> <core count file> <time serial analytics file> <time parallel analytics file> <space serial analytics file> <space parallel analytics file> <power serial analytics file> <power parallel analytics file> <energy serial analytics file> <energy parallel analytics file> <speedup analytics file> <freeup analytics file> <powerup analytics file> <energyup analytics file> <id> <repo> <start time> <progress>"
   exit 1
 }
 
-if [ "$#" -ne 18 ]; then
-    echo "Invalid number of parameters. Expected:18 Passed:$#"
+if [ "$#" -ne 22 ]; then
+    echo "Invalid number of parameters. Expected:22 Passed:$#"
     usage
 fi
 
@@ -29,6 +29,10 @@ speedup_analytics_file=${15}
 freeup_analytics_file=${16}
 powerup_analytics_file=${17}
 energyup_analytics_file=${18}
+id=${19}
+repo=${20}
+start_time=${21}
+progress=${22}
 
 serial_measurement=serial.csv
 parallel_measurement=parallel.csv
@@ -77,7 +81,6 @@ power_serial=()
 energy_serial=()
 
 # time - serial
-progress=20
 progress_bandwidth=10
 
 for i in ${iva[@]}
@@ -90,10 +93,10 @@ do
 
   progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=${#iva[@]}; p + (bw/l)" | bc -l`
 
-  echo "{\"currentStep\":\"Time Analysis\",\"endTime\":\"Thu Jul 25 19:45:16 2024\",\
-  \"errorCode\":0,\"id\":\"VKcp2w\",\"message\":\"\",\"nextStep\":\"Space Analysis\",\
-  \"progress\":$progress,\"repo\":\"https://github.com/srbhuyan/matrix-multiply-experimental.git\",\
-  \"startTime\":\"Thu Jul 25 19:45:01 2024\",\"status\":\"In progress\"}" > $analysis_file
+  echo "{\"currentStep\":\"Time Analysis\",\"endTime\":\"\",\
+  \"errorCode\":0,\"id\":\"$id\",\"message\":\"\",\"nextStep\":\"Space Analysis\",\
+  \"progress\":$progress,\"repo\":\"$repo\",\
+  \"startTime\":\"$start_time\",\"status\":\"In progress\"}" > $analysis_file
 done
 
 # memory - serial
@@ -109,10 +112,10 @@ do
 
   progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=${#iva[@]}; p + (bw/l)" | bc -l`
 
-  echo "{\"currentStep\":\"Memory Analysis\",\"endTime\":\"Thu Jul 25 19:45:16 2024\",\
-  \"errorCode\":0,\"id\":\"VKcp2w\",\"message\":\"\",\"nextStep\":\"Power Analysis\",\
-  \"progress\":$progress,\"repo\":\"https://github.com/srbhuyan/matrix-multiply-experimental.git\",\
-  \"startTime\":\"Thu Jul 25 19:45:01 2024\",\"status\":\"In progress\"}" > $analysis_file
+  echo "{\"currentStep\":\"Memory Analysis\",\"endTime\":\"\",\
+  \"errorCode\":0,\"id\":\"$id\",\"message\":\"\",\"nextStep\":\"Power Analysis\",\
+  \"progress\":$progress,\"repo\":\"$repo\",\
+  \"startTime\":\"$start_time\",\"status\":\"In progress\"}" > $analysis_file
 done
 
 # power - serial
@@ -126,10 +129,10 @@ do
 
   progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=${#iva[@]}; p + (bw/l)" | bc -l`
 
-  echo "{\"currentStep\":\"Power Analysis\",\"endTime\":\"Thu Jul 25 19:45:16 2024\",\
-  \"errorCode\":0,\"id\":\"VKcp2w\",\"message\":\"\",\"nextStep\":\"Multicore Performance Analysis\",\
-  \"progress\":$progress,\"repo\":\"https://github.com/srbhuyan/matrix-multiply-experimental.git\",\
-  \"startTime\":\"Thu Jul 25 19:45:01 2024\",\"status\":\"In progress\"}" > $analysis_file
+  echo "{\"currentStep\":\"Power Analysis\",\"endTime\":\"\",\
+  \"errorCode\":0,\"id\":\"$id\",\"message\":\"\",\"nextStep\":\"Multicore Performance Analysis\",\
+  \"progress\":$progress,\"repo\":\"$repo\",\
+  \"startTime\":\"$start_time\",\"status\":\"In progress\"}" > $analysis_file
 done
 
 # energy - serial
@@ -165,10 +168,10 @@ do
 
   progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=${#core[@]}; p + (bw/l)" | bc -l`
 
-  echo "{\"currentStep\":\"Multicore Performance Analysis\",\"endTime\":\"Thu Jul 25 19:45:16 2024\",\
-  \"errorCode\":0,\"id\":\"VKcp2w\",\"message\":\"\",\"nextStep\":\"Predictive Model Generation\",\
-  \"progress\":$progress,\"repo\":\"https://github.com/srbhuyan/matrix-multiply-experimental.git\",\
-  \"startTime\":\"Thu Jul 25 19:45:01 2024\",\"status\":\"In progress\"}" > $analysis_file
+  echo "{\"currentStep\":\"Multicore Performance Analysis\",\"endTime\":\"\",\
+  \"errorCode\":0,\"id\":\"$id\",\"message\":\"\",\"nextStep\":\"Predictive Model Generation\",\
+  \"progress\":$progress,\"repo\":\"$repo\",\
+  \"startTime\":\"$start_time\",\"status\":\"In progress\"}" > $analysis_file
 done
 
 # memory - parallel
@@ -184,10 +187,10 @@ do
 
   progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=${#core[@]}; p + (bw/l)" | bc -l`
 
-  echo "{\"currentStep\":\"Multicore Performance Analysis\",\"endTime\":\"Thu Jul 25 19:45:16 2024\",\
-  \"errorCode\":0,\"id\":\"VKcp2w\",\"message\":\"\",\"nextStep\":\"Predictive Model Generation\",\
-  \"progress\":$progress,\"repo\":\"https://github.com/srbhuyan/matrix-multiply-experimental.git\",\
-  \"startTime\":\"Thu Jul 25 19:45:01 2024\",\"status\":\"In progress\"}" > $analysis_file
+  echo "{\"currentStep\":\"Multicore Performance Analysis\",\"endTime\":\"\",\
+  \"errorCode\":0,\"id\":\"$id\",\"message\":\"\",\"nextStep\":\"Predictive Model Generation\",\
+  \"progress\":$progress,\"repo\":\"$repo\",\
+  \"startTime\":\"$start_time\",\"status\":\"In progress\"}" > $analysis_file
 done
 
 # power - parallel
@@ -201,10 +204,10 @@ do
 
   progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=${#core[@]}; p + (bw/l)" | bc -l`
 
-  echo "{\"currentStep\":\"Multicore Performance Analysis\",\"endTime\":\"Thu Jul 25 19:45:16 2024\",\
-  \"errorCode\":0,\"id\":\"VKcp2w\",\"message\":\"\",\"nextStep\":\"Predictive Model Generation\",\
-  \"progress\":$progress,\"repo\":\"https://github.com/srbhuyan/matrix-multiply-experimental.git\",\
-  \"startTime\":\"Thu Jul 25 19:45:01 2024\",\"status\":\"In progress\"}" > $analysis_file
+  echo "{\"currentStep\":\"Multicore Performance Analysis\",\"endTime\":\"\",\
+  \"errorCode\":0,\"id\":\"$id\",\"message\":\"\",\"nextStep\":\"Predictive Model Generation\",\
+  \"progress\":$progress,\"repo\":\"$repo\",\
+  \"startTime\":\"$start_time\",\"status\":\"In progress\"}" > $analysis_file
 done
 
 # energy - parallel
@@ -300,109 +303,109 @@ fit.py --in-file time-serial.json --out-file time-serial-fitted.json
 
   progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=$fit_count; p + (bw/l)" | bc -l`
 
-  echo "{\"currentStep\":\"Predictive Model Generation\",\"endTime\":\"Thu Jul 25 19:45:16 2024\",\
-  \"errorCode\":0,\"id\":\"VKcp2w\",\"message\":\"\",\"nextStep\":\"None\",\
-  \"progress\":$progress,\"repo\":\"https://github.com/srbhuyan/matrix-multiply-experimental.git\",\
-  \"startTime\":\"Thu Jul 25 19:45:01 2024\",\"status\":\"In progress\"}" > $analysis_file
+  echo "{\"currentStep\":\"Predictive Model Generation\",\"endTime\":\"\",\
+  \"errorCode\":0,\"id\":\"$id\",\"message\":\"\",\"nextStep\":\"None\",\
+  \"progress\":$progress,\"repo\":\"$repo\",\
+  \"startTime\":\"$start_time\",\"status\":\"In progress\"}" > $analysis_file
 
 fit.py --in-file time-parallel.json --out-file time-parallel-fitted.json
 
   progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=$fit_count; p + (bw/l)" | bc -l`
 
-  echo "{\"currentStep\":\"Predictive Model Generation\",\"endTime\":\"Thu Jul 25 19:45:16 2024\",\
-  \"errorCode\":0,\"id\":\"VKcp2w\",\"message\":\"\",\"nextStep\":\"None\",\
-  \"progress\":$progress,\"repo\":\"https://github.com/srbhuyan/matrix-multiply-experimental.git\",\
-  \"startTime\":\"Thu Jul 25 19:45:01 2024\",\"status\":\"In progress\"}" > $analysis_file
+  echo "{\"currentStep\":\"Predictive Model Generation\",\"endTime\":\"\",\
+  \"errorCode\":0,\"id\":\"$id\",\"message\":\"\",\"nextStep\":\"None\",\
+  \"progress\":$progress,\"repo\":\"$repo\",\
+  \"startTime\":\"$start_time\",\"status\":\"In progress\"}" > $analysis_file
 
 fit.py --in-file space-serial.json --out-file space-serial-fitted.json
 
   progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=$fit_count; p + (bw/l)" | bc -l`
 
-  echo "{\"currentStep\":\"Predictive Model Generation\",\"endTime\":\"Thu Jul 25 19:45:16 2024\",\
-  \"errorCode\":0,\"id\":\"VKcp2w\",\"message\":\"\",\"nextStep\":\"None\",\
-  \"progress\":$progress,\"repo\":\"https://github.com/srbhuyan/matrix-multiply-experimental.git\",\
-  \"startTime\":\"Thu Jul 25 19:45:01 2024\",\"status\":\"In progress\"}" > $analysis_file
+  echo "{\"currentStep\":\"Predictive Model Generation\",\"endTime\":\"\",\
+  \"errorCode\":0,\"id\":\"$id\",\"message\":\"\",\"nextStep\":\"None\",\
+  \"progress\":$progress,\"repo\":\"$repo\",\
+  \"startTime\":\"$start_time\",\"status\":\"In progress\"}" > $analysis_file
 
 fit.py --in-file space-parallel.json --out-file space-parallel-fitted.json
 
   progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=$fit_count; p + (bw/l)" | bc -l`
 
-  echo "{\"currentStep\":\"Predictive Model Generation\",\"endTime\":\"Thu Jul 25 19:45:16 2024\",\
-  \"errorCode\":0,\"id\":\"VKcp2w\",\"message\":\"\",\"nextStep\":\"None\",\
-  \"progress\":$progress,\"repo\":\"https://github.com/srbhuyan/matrix-multiply-experimental.git\",\
-  \"startTime\":\"Thu Jul 25 19:45:01 2024\",\"status\":\"In progress\"}" > $analysis_file
+  echo "{\"currentStep\":\"Predictive Model Generation\",\"endTime\":\"\",\
+  \"errorCode\":0,\"id\":\"$id\",\"message\":\"\",\"nextStep\":\"None\",\
+  \"progress\":$progress,\"repo\":\"$repo\",\
+  \"startTime\":\"$start_time\",\"status\":\"In progress\"}" > $analysis_file
 
 fit.py --in-file power-serial.json --out-file power-serial-fitted.json
 
   progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=$fit_count; p + (bw/l)" | bc -l`
 
-  echo "{\"currentStep\":\"Predictive Model Generation\",\"endTime\":\"Thu Jul 25 19:45:16 2024\",\
-  \"errorCode\":0,\"id\":\"VKcp2w\",\"message\":\"\",\"nextStep\":\"None\",\
-  \"progress\":$progress,\"repo\":\"https://github.com/srbhuyan/matrix-multiply-experimental.git\",\
-  \"startTime\":\"Thu Jul 25 19:45:01 2024\",\"status\":\"In progress\"}" > $analysis_file
+  echo "{\"currentStep\":\"Predictive Model Generation\",\"endTime\":\"\",\
+  \"errorCode\":0,\"id\":\"$id\",\"message\":\"\",\"nextStep\":\"None\",\
+  \"progress\":$progress,\"repo\":\"$repo\",\
+  \"startTime\":\"$start_time\",\"status\":\"In progress\"}" > $analysis_file
 
 fit.py --in-file power-parallel.json --out-file power-parallel-fitted.json
 
   progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=$fit_count; p + (bw/l)" | bc -l`
 
-  echo "{\"currentStep\":\"Predictive Model Generation\",\"endTime\":\"Thu Jul 25 19:45:16 2024\",\
-  \"errorCode\":0,\"id\":\"VKcp2w\",\"message\":\"\",\"nextStep\":\"None\",\
-  \"progress\":$progress,\"repo\":\"https://github.com/srbhuyan/matrix-multiply-experimental.git\",\
-  \"startTime\":\"Thu Jul 25 19:45:01 2024\",\"status\":\"In progress\"}" > $analysis_file
+  echo "{\"currentStep\":\"Predictive Model Generation\",\"endTime\":\"\",\
+  \"errorCode\":0,\"id\":\"$id\",\"message\":\"\",\"nextStep\":\"None\",\
+  \"progress\":$progress,\"repo\":\"$repo\",\
+  \"startTime\":\"$start_time\",\"status\":\"In progress\"}" > $analysis_file
 
 fit.py --in-file energy-serial.json --out-file energy-serial-fitted.json
 
   progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=$fit_count; p + (bw/l)" | bc -l`
 
-  echo "{\"currentStep\":\"Predictive Model Generation\",\"endTime\":\"Thu Jul 25 19:45:16 2024\",\
-  \"errorCode\":0,\"id\":\"VKcp2w\",\"message\":\"\",\"nextStep\":\"None\",\
-  \"progress\":$progress,\"repo\":\"https://github.com/srbhuyan/matrix-multiply-experimental.git\",\
-  \"startTime\":\"Thu Jul 25 19:45:01 2024\",\"status\":\"In progress\"}" > $analysis_file
+  echo "{\"currentStep\":\"Predictive Model Generation\",\"endTime\":\"\",\
+  \"errorCode\":0,\"id\":\"$id\",\"message\":\"\",\"nextStep\":\"None\",\
+  \"progress\":$progress,\"repo\":\"$repo\",\
+  \"startTime\":\"$start_time\",\"status\":\"In progress\"}" > $analysis_file
 
 fit.py --in-file energy-parallel.json --out-file energy-parallel-fitted.json
 
   progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=$fit_count; p + (bw/l)" | bc -l`
 
-  echo "{\"currentStep\":\"Predictive Model Generation\",\"endTime\":\"Thu Jul 25 19:45:16 2024\",\
-  \"errorCode\":0,\"id\":\"VKcp2w\",\"message\":\"\",\"nextStep\":\"None\",\
-  \"progress\":$progress,\"repo\":\"https://github.com/srbhuyan/matrix-multiply-experimental.git\",\
-  \"startTime\":\"Thu Jul 25 19:45:01 2024\",\"status\":\"In progress\"}" > $analysis_file
+  echo "{\"currentStep\":\"Predictive Model Generation\",\"endTime\":\"\",\
+  \"errorCode\":0,\"id\":\"$id\",\"message\":\"\",\"nextStep\":\"None\",\
+  \"progress\":$progress,\"repo\":\"$repo\",\
+  \"startTime\":\"$start_time\",\"status\":\"In progress\"}" > $analysis_file
 
 fit.py --in-file speedup.json --out-file speedup-fitted.json
 
   progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=$fit_count; p + (bw/l)" | bc -l`
 
-  echo "{\"currentStep\":\"Predictive Model Generation\",\"endTime\":\"Thu Jul 25 19:45:16 2024\",\
-  \"errorCode\":0,\"id\":\"VKcp2w\",\"message\":\"\",\"nextStep\":\"None\",\
-  \"progress\":$progress,\"repo\":\"https://github.com/srbhuyan/matrix-multiply-experimental.git\",\
-  \"startTime\":\"Thu Jul 25 19:45:01 2024\",\"status\":\"In progress\"}" > $analysis_file
+  echo "{\"currentStep\":\"Predictive Model Generation\",\"endTime\":\"\",\
+  \"errorCode\":0,\"id\":\"$id\",\"message\":\"\",\"nextStep\":\"None\",\
+  \"progress\":$progress,\"repo\":\"$repo\",\
+  \"startTime\":\"$start_time\",\"status\":\"In progress\"}" > $analysis_file
 
 fit.py --in-file freeup.json --out-file freeup-fitted.json
 
   progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=$fit_count; p + (bw/l)" | bc -l`
 
-  echo "{\"currentStep\":\"Predictive Model Generation\",\"endTime\":\"Thu Jul 25 19:45:16 2024\",\
-  \"errorCode\":0,\"id\":\"VKcp2w\",\"message\":\"\",\"nextStep\":\"None\",\
-  \"progress\":$progress,\"repo\":\"https://github.com/srbhuyan/matrix-multiply-experimental.git\",\
-  \"startTime\":\"Thu Jul 25 19:45:01 2024\",\"status\":\"In progress\"}" > $analysis_file
+  echo "{\"currentStep\":\"Predictive Model Generation\",\"endTime\":\"\",\
+  \"errorCode\":0,\"id\":\"$id\",\"message\":\"\",\"nextStep\":\"None\",\
+  \"progress\":$progress,\"repo\":\"$repo\",\
+  \"startTime\":\"$start_time\",\"status\":\"In progress\"}" > $analysis_file
 
 fit.py --in-file powerup.json --out-file powerup-fitted.json
 
   progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=$fit_count; p + (bw/l)" | bc -l`
 
-  echo "{\"currentStep\":\"Predictive Model Generation\",\"endTime\":\"Thu Jul 25 19:45:16 2024\",\
-  \"errorCode\":0,\"id\":\"VKcp2w\",\"message\":\"\",\"nextStep\":\"None\",\
-  \"progress\":$progress,\"repo\":\"https://github.com/srbhuyan/matrix-multiply-experimental.git\",\
-  \"startTime\":\"Thu Jul 25 19:45:01 2024\",\"status\":\"In progress\"}" > $analysis_file
+  echo "{\"currentStep\":\"Predictive Model Generation\",\"endTime\":\"\",\
+  \"errorCode\":0,\"id\":\"$id\",\"message\":\"\",\"nextStep\":\"None\",\
+  \"progress\":$progress,\"repo\":\"$repo\",\
+  \"startTime\":\"$start_time\",\"status\":\"In progress\"}" > $analysis_file
 
 fit.py --in-file energyup.json --out-file energyup-fitted.json
 
   progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=$fit_count; p + (bw/l)" | bc -l`
 
-  echo "{\"currentStep\":\"Predictive Model Generation\",\"endTime\":\"Thu Jul 25 19:45:16 2024\",\
-  \"errorCode\":0,\"id\":\"VKcp2w\",\"message\":\"\",\"nextStep\":\"None\",\
-  \"progress\":$progress,\"repo\":\"https://github.com/srbhuyan/matrix-multiply-experimental.git\",\
-  \"startTime\":\"Thu Jul 25 19:45:01 2024\",\"status\":\"In progress\"}" > $analysis_file
+  echo "{\"currentStep\":\"Predictive Model Generation\",\"endTime\":\"\",\
+  \"errorCode\":0,\"id\":\"$id\",\"message\":\"\",\"nextStep\":\"None\",\
+  \"progress\":$progress,\"repo\":\"$repo\",\
+  \"startTime\":\"$start_time\",\"status\":\"In progress\"}" > $analysis_file
 
 # time serial
 jo -p \
