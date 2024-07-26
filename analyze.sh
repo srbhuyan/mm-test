@@ -49,71 +49,120 @@ rm $energyup_analytics_file 2> /dev/null
 rm $serial_measurement 2> /dev/null
 rm $parallel_measurement 2> /dev/null
 
-readarray -t iva  < $iva_data_file
-readarray -t core < $core_count_file
+readarray -t iva_arr  < $iva_data_file
+readarray -t core_arr < $core_count_file
+
+iva=()
+core=()
+
+for i in ${iva_arr[@]}
+do
+  iva+=($i)
+done
+
+for i in ${core_arr[@]}
+do
+  core+=($i)
+done
 
 # make
 make
 
 # serial run
+
+time_serial=()
+space_serial=()
+power_serial=()
+energy_serial=()
+
+# time - serial
+for i in ${iva[@]}
+do
+  # time
+  start=`date +%s.%N`;\
+  ./$serial_algo $i $i;\
+  end=`date +%s.%N`;\
+  time_serial+=(`printf '%.8f' $( echo "$end - $start" | bc -l )`);
+done
+
+# memory - serial
 count=1
 for i in ${iva[@]}
 do
-  # time, memory
-  start=`date +%s.%N`;\
+  # memory
   heaptrack -o "$serial_algo.$count" ./$serial_algo $i $i;\
-  end=`date +%s.%N`;\
-  time_serial=`printf '%.8f' $( echo "$end - $start" | bc -l )`;\
-  memory_serial=`heaptrack --analyze "$serial_algo.$count.zst"  | grep "peak heap memory consumption" | awk '{print $5}'`;
-
-  # power, energy
-  ./$serial_algo $i $i && \
-  power=`ipmimonitoring | grep "PW consumption" | awk '{print $13}'`; \
-  energy=`echo "tm=$time_serial;pw=$power;tm * pw" | bc`;
-
-  echo "$i,$time_serial,$memory_serial,$power,$energy" >> "$serial_measurement"
+  space_serial+=(`heaptrack --analyze "$serial_algo.$count.zst"  | grep "peak heap memory consumption" | awk '{print $5}'`);
   count=$((count+1))
 done
 
+# power - serial
+for i in ${iva[@]}
+do
+  # power
+  ./$serial_algo $i $i && \
+  power_serial+=(`ipmimonitoring | grep "PW consumption" | awk '{print $13}'`);
+done
+
+# energy - serial
+for i in "${!iva[@]}"
+do
+  # energy
+  energy_serial+=(`echo "tm=${time_serial[i]};pw=${power_serial[i]};tm * pw" | bc`);
+done
+
+# serial measurement file
+for i in "${!iva[@]}"
+do
+  echo "${iva[i]},${time_serial[i]},${memory_serial[i]},${power_serial[i]},${energy_serial[i]}" >> "$serial_measurement"
+done
+
 # parallel run
+
+time_parallel=()
+space_parallel=()
+power_parallel=()
+energy_parallel=()
+
+# time - parallel
+for i in ${core[@]}
+do
+  # time
+  start=`date +%s.%N`;\
+  ./$parallel_algo $iva_data $iva_data $i;\
+  end=`date +%s.%N`;\
+  time_parallel+=(`printf '%.8f' $( echo "$end - $start" | bc -l )`);
+done
+
+# memory - parallel
 count=1
 for i in ${core[@]}
 do
   # time, memory
-  start=`date +%s.%N`;\
   heaptrack -o "$parallel_algo.$count" ./$parallel_algo $iva_data $iva_data $i;\
-  end=`date +%s.%N`;\
-  time_parallel=`printf '%.8f' $( echo "$end - $start" | bc -l )`;\
-  memory_parallel=`heaptrack --analyze "$parallel_algo.$count.zst"  | grep "peak heap memory consumption" | awk '{print $5}'`;
-
-  # power, energy
-  ./$parallel_algo $iva_data $iva_data $i && \
-  power=`ipmimonitoring | grep "PW consumption" | awk '{print $13}'`; \
-  energy=`echo "pw=$power;tm=$time_parallel;pw * tm" | bc`;
-
-  echo "$i,$time_parallel,$memory_parallel,$power,$energy" >> "$parallel_measurement"
+  space_parallel+=(`heaptrack --analyze "$parallel_algo.$count.zst"  | grep "peak heap memory consumption" | awk '{print $5}'`);
   count=$((count+1))
 done
 
-# analytics
-iva=()
-core=()
-time_serial=()
-space_serial=()
-time_parallel=()
-space_parallel=()
-power_serial=()
-power_parallel=()
-energy_serial=()
-energy_parallel=()
+# power - parallel
+for i in ${core[@]}
+do
+  # power
+  ./$parallel_algo $iva_data $iva_data $i && \
+  power_parallel+=(`ipmimonitoring | grep "PW consumption" | awk '{print $13}'`);
+done
 
-while IFS=, read -r i t s p e;
-do iva+=($i) time_serial+=($t) space_serial+=($s) power_serial+=($p) energy_serial+=($e);
-done < $serial_measurement
+# energy - parallel
+for i in "${!core[@]}"
+do
+  # energy
+  energy_parallel+=(`echo "tm=${time_parallel[i]};pw=${power_parallel[i]};tm * pw" | bc`);
+done
 
-while IFS=, read -r i t s p e;
-do core+=($i) time_parallel+=($t) space_parallel+=($s) power_parallel+=($p) energy_parallel+=($e);
-done < $parallel_measurement
+# parallel measurement file
+for i in "${!core[@]}"
+do
+  echo "${core[i]},${time_parallel[i]},${memory_parallel[i]},${power_parallel[i]},${energy_parallel[i]}" >> "$parallel_measurement"
+done
 
 # data prep
 for i in "${!space_serial[@]}"; do
