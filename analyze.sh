@@ -521,7 +521,7 @@ r_squared="`jq '.r_squared' freeup-fitted.json`" \
 jo -p \
 iva=$(jo data=$(jo -a ${core[@]}) name=core unit=count) \
 measurements=$(jo data=$(jo -a ${powerup[@]}) name='PowerEfficiency(P1/Pcore)' unit='') \
-predictions=$(jo data="`jq '.fitted_measurements' powerup-fitted.json`" name='Power Efficiency(P1/Pcore)' unit='') \
+predictions=$(jo data="`jq '.fitted_measurements' powerup-fitted.json`" name='PowerEfficiency(P1/Pcore)' unit='') \
 polynomial="`jq '.polynomial' powerup-fitted.json`" \
 maxError="`jq '.max_error' powerup-fitted.json`" \
 rSquared="`jq '.r_squared' powerup-fitted.json`" \
@@ -531,7 +531,7 @@ rSquared="`jq '.r_squared' powerup-fitted.json`" \
 jo -p \
 iva=$(jo data=$(jo -a ${core[@]}) name=core unit=count) \
 measurements=$(jo data=$(jo -a ${energyup[@]}) name='EnergyEfficiency(E1/Ecore)' unit='') \
-predictions=$(jo data="`jq '.fitted_measurements' energyup-fitted.json`" name='Energy Efficiency(E1/Ecore)' unit='') \
+predictions=$(jo data="`jq '.fitted_measurements' energyup-fitted.json`" name='EnergyEfficiency(E1/Ecore)' unit='') \
 polynomial="`jq '.polynomial' energyup-fitted.json`" \
 maxError="`jq '.max_error' energyup-fitted.json`" \
 rSquared="`jq '.r_squared' energyup-fitted.json`" \
