@@ -1,22 +1,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-void real_mult(double ** a, double ** b, double ** res, int r, int c){
+void mult(double ** a, double ** b, double ** res, int r, int c){
   for(int i=0;i<r;i++){
     for(int j=0;j<c;j++){
-      res[i][j] = 0;
       for(int k=0;k<r;k++){
         res[i][j] += a[i][k] * b[k][j];
       }
     }
   }
-}
-
-void mult(double ** a, double ** b, double ** res, int r, int c){
-
-  // do stuff
-  real_mult(a, b, res, r, c);
-  // do more stuff    
 }
 
 void print(double ** a, int r, int c){
@@ -71,6 +63,7 @@ int main(int argc, char * argv[]){
     for(int j=0;j<c;j++){
       a[i][j] = (double)(i + j);
       b[i][j] = (double)(i + j);
+      res[i][j] = 0;
     }
   }
 
