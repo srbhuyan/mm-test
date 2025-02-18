@@ -588,6 +588,7 @@ do
   measurements=$(jo data=$(jo -a ${power_parallel[@]}) name=power unit="watts") \
   predictions=$(jo data="`jq '.fitted_measurements' power-parallel-fitted-"$degree".json`" name=power unit="watts") \
   polynomial="`jq '.polynomial' power-parallel-fitted-"$degree".json`" \
+  piecewise="`jq '.piecewise' power-parallel-fitted-"$degree".json`" \
   maxError="`jq '.max_error' power-parallel-fitted-"$degree".json`" \
   rSquared="`jq '.r_squared' power-parallel-fitted-"$degree".json`" \
   > $power_parallel_analytics_file_d
