@@ -698,7 +698,7 @@ do
   measurements=$(jo data=$(jo -a ${energyup[@]}) name='EnergyEfficiency(E1/Ecore)' unit='') \
   predictions=$(jo data="`jq '.fitted_measurements' energyup-fitted-"$degree".json`" name='EnergyEfficiency(E1/Ecore)' unit='') \
   polynomial="`jq '.polynomial' energyup-fitted-"$degree".json`" \
-  polynomial="`jq '.piecewise' energyup-fitted-"$degree".json`" \
+  piecewise="`jq '.piecewise' energyup-fitted-"$degree".json`" \
   maxError="`jq '.max_error' energyup-fitted-"$degree".json`" \
   rSquared="`jq '.r_squared' energyup-fitted-"$degree".json`" \
   > $energyup_analytics_file_d
