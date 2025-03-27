@@ -6,6 +6,28 @@ usage()
   exit 1
 }
 
+call_fit() {
+  local in_file=$1
+  local out_file=$2
+  local progress=$3
+  local progress_bandwidth=$4
+  local fit_count=$5
+  local id=$6
+  local repo=$7
+  local repo_name=$8
+  local start_time=$9
+  local analysis_file=${10}
+
+  fit.py --in-file "${1}" --out-file "${2}"
+
+  progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=$fit_count; p + (bw/l)" | bc -l`
+
+  echo "{\"id\":\"$id\",\"repo\":\"$repo\",\"repoName\":\"$repo_name\",\"startTime\":\"$start_time\",\
+  \"endTime\":\"\",\"status\":\"In progress\",\"progress\":{\"currentStep\":\"Predictive Model Generation\",\
+  \"nextStep\":\"None\",\"percent\":$progress},\
+  \"result\":{\"errorCode\":0,\"message\":\"\",\"repo\":\"\"}}" > $analysis_file
+}
+
 if [ "$#" -ne 29 ]; then
     echo "Invalid number of parameters. Expected:29 Passed:$#"
     usage
@@ -45,32 +67,40 @@ serial_measurement=serial.csv
 parallel_measurement=parallel.csv
 analysis_file=analysis.json
 
-# fit for max polynomial degress of 4 and 10
-# adding more values will generate more fittings
-poly_max_degree_vals=(10)
-
 # parallel code generation config
 parallel_plugin_so=MyRewriter.so
 parallel_plugin_name=rew
 
+echo "cleaning up"
+
 # cleanup
-rm $time_serial_analytics_file 2> /dev/null
-rm $time_parallel_analytics_file 2> /dev/null
-rm $space_serial_analytics_file 2> /dev/null
-rm $space_parallel_analytics_file 2> /dev/null
-rm $power_serial_analytics_file 2> /dev/null
-rm $power_parallel_analytics_file 2> /dev/null
-rm $energy_serial_analytics_file 2> /dev/null
-rm $energy_parallel_analytics_file 2> /dev/null
-rm $speedup_analytics_file 2> /dev/null
-rm $freeup_analytics_file 2> /dev/null
-rm $powerup_analytics_file 2> /dev/null
-rm $energyup_analytics_file 2> /dev/null
-rm $serial_measurement 2> /dev/null
-rm $parallel_measurement 2> /dev/null
+#rm $time_serial_analytics_file 2> /dev/null
+#rm $time_parallel_analytics_file 2> /dev/null
+#rm $space_serial_analytics_file 2> /dev/null
+#rm $space_parallel_analytics_file 2> /dev/null
+#rm $power_serial_analytics_file 2> /dev/null
+#rm $power_parallel_analytics_file 2> /dev/null
+#rm $energy_serial_analytics_file 2> /dev/null
+#rm $energy_parallel_analytics_file 2> /dev/null
+#rm $speedup_analytics_file 2> /dev/null
+#rm $freeup_analytics_file 2> /dev/null
+#rm $powerup_analytics_file 2> /dev/null
+#rm $energyup_analytics_file 2> /dev/null
+#rm $serial_measurement 2> /dev/null
+#rm $parallel_measurement 2> /dev/null
+
+rm -f $time_serial_analytics_file $time_parallel_analytics_file $space_serial_analytics_file \
+   $space_parallel_analytics_file $power_serial_analytics_file $power_parallel_analytics_file \
+   $energy_serial_analytics_file $energy_parallel_analytics_file $speedup_analytics_file \
+   $freeup_analytics_file $powerup_analytics_file $energyup_analytics_file \
+   $serial_measurement $parallel_measurement
+
+echo "cleanup done"
 
 readarray -t iva_arr  < $iva_data_file
 readarray -t core_arr < $core_count_file
+
+echo "read array files"
 
 power_profile=()
 
@@ -119,6 +149,8 @@ energy_serial=()
 
 # time - serial
 progress_bandwidth=10
+
+echo "starting.."
 
 for i in ${iva[@]}
 do
@@ -339,368 +371,180 @@ measurements=$(jo -a ${energyup[@]}) > energyup.json
 
 progress_bandwidth=10
 fit_count=12
+analysis_types=('time-serial' 'time-parallel' 'space-serial' 'space-parallel' 'power-serial' 'power-parallel' 'energy-serial' 'energy-parallel' 'speedup' 'freeup' 'powerup' 'energyup')
 
-for degree in ${poly_max_degree_vals[@]}
+for i in "${analysis_types[@]}"
 do
-  fit.py --in-file time-serial.json --out-file time-serial-fitted-"$degree".json  --error-threshold 2 --poly-max-degree $degree
+  echo "${i}.json"
+  echo "${i}-fitted.json"
+  call_fit $i.json $i-fitted.json $progress $progress_bandwidth $fit_count $id $repo $repo_name $start_time $analysis_file
 done
-
-  progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=$fit_count; p + (bw/l)" | bc -l`
-
-  echo "{\"id\":\"$id\",\"repo\":\"$repo\",\"repoName\":\"$repo_name\",\"startTime\":\"$start_time\",\
-  \"endTime\":\"\",\"status\":\"In progress\",\"progress\":{\"currentStep\":\"Predictive Model Generation\",\
-  \"nextStep\":\"None\",\"percent\":$progress},\
-  \"result\":{\"errorCode\":0,\"message\":\"\",\"repo\":\"\"}}" > $analysis_file
-
-for degree in ${poly_max_degree_vals[@]}
-do
-  fit.py --in-file time-parallel.json --out-file time-parallel-fitted-"$degree".json  --error-threshold 2 --poly-max-degree $degree
-done
-
-  progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=$fit_count; p + (bw/l)" | bc -l`
-
-  echo "{\"id\":\"$id\",\"repo\":\"$repo\",\"repoName\":\"$repo_name\",\"startTime\":\"$start_time\",\
-  \"endTime\":\"\",\"status\":\"In progress\",\"progress\":{\"currentStep\":\"Predictive Model Generation\",\
-  \"nextStep\":\"None\",\"percent\":$progress},\
-  \"result\":{\"errorCode\":0,\"message\":\"\",\"repo\":\"\"}}" > $analysis_file
-
-for degree in ${poly_max_degree_vals[@]}
-do
-  fit.py --in-file space-serial.json --out-file space-serial-fitted-"$degree".json  --error-threshold 2 --poly-max-degree $degree
-done
-
-  progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=$fit_count; p + (bw/l)" | bc -l`
-
-  echo "{\"id\":\"$id\",\"repo\":\"$repo\",\"repoName\":\"$repo_name\",\"startTime\":\"$start_time\",\
-  \"endTime\":\"\",\"status\":\"In progress\",\"progress\":{\"currentStep\":\"Predictive Model Generation\",\
-  \"nextStep\":\"None\",\"percent\":$progress},\
-  \"result\":{\"errorCode\":0,\"message\":\"\",\"repo\":\"\"}}" > $analysis_file
-
-for degree in ${poly_max_degree_vals[@]}
-do
-  fit.py --in-file space-parallel.json --out-file space-parallel-fitted-"$degree".json  --error-threshold 2 --poly-max-degree $degree
-done
-
-  progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=$fit_count; p + (bw/l)" | bc -l`
-
-  echo "{\"id\":\"$id\",\"repo\":\"$repo\",\"repoName\":\"$repo_name\",\"startTime\":\"$start_time\",\
-  \"endTime\":\"\",\"status\":\"In progress\",\"progress\":{\"currentStep\":\"Predictive Model Generation\",\
-  \"nextStep\":\"None\",\"percent\":$progress},\
-  \"result\":{\"errorCode\":0,\"message\":\"\",\"repo\":\"\"}}" > $analysis_file
-
-for degree in ${poly_max_degree_vals[@]}
-do
-  fit.py --in-file power-serial.json --out-file power-serial-fitted-"$degree".json  --error-threshold 2 --poly-max-degree $degree
-done
-
-  progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=$fit_count; p + (bw/l)" | bc -l`
-
-  echo "{\"id\":\"$id\",\"repo\":\"$repo\",\"repoName\":\"$repo_name\",\"startTime\":\"$start_time\",\
-  \"endTime\":\"\",\"status\":\"In progress\",\"progress\":{\"currentStep\":\"Predictive Model Generation\",\
-  \"nextStep\":\"None\",\"percent\":$progress},\
-  \"result\":{\"errorCode\":0,\"message\":\"\",\"repo\":\"\"}}" > $analysis_file
-
-for degree in ${poly_max_degree_vals[@]}
-do
-  fit.py --in-file power-parallel.json --out-file power-parallel-fitted-"$degree".json  --error-threshold 2 --poly-max-degree $degree
-done
-
-  progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=$fit_count; p + (bw/l)" | bc -l`
-
-  echo "{\"id\":\"$id\",\"repo\":\"$repo\",\"repoName\":\"$repo_name\",\"startTime\":\"$start_time\",\
-  \"endTime\":\"\",\"status\":\"In progress\",\"progress\":{\"currentStep\":\"Predictive Model Generation\",\
-  \"nextStep\":\"None\",\"percent\":$progress},\
-  \"result\":{\"errorCode\":0,\"message\":\"\",\"repo\":\"\"}}" > $analysis_file
-
-for degree in ${poly_max_degree_vals[@]}
-do
-  fit.py --in-file energy-serial.json --out-file energy-serial-fitted-"$degree".json  --error-threshold 2 --poly-max-degree $degree
-done
-
-  progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=$fit_count; p + (bw/l)" | bc -l`
-
-  echo "{\"id\":\"$id\",\"repo\":\"$repo\",\"repoName\":\"$repo_name\",\"startTime\":\"$start_time\",\
-  \"endTime\":\"\",\"status\":\"In progress\",\"progress\":{\"currentStep\":\"Predictive Model Generation\",\
-  \"nextStep\":\"None\",\"percent\":$progress},\
-  \"result\":{\"errorCode\":0,\"message\":\"\",\"repo\":\"\"}}" > $analysis_file
-
-for degree in ${poly_max_degree_vals[@]}
-do
-  fit.py --in-file energy-parallel.json --out-file energy-parallel-fitted-"$degree".json  --error-threshold 2 --poly-max-degree $degree
-done
-
-  progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=$fit_count; p + (bw/l)" | bc -l`
-
-  echo "{\"id\":\"$id\",\"repo\":\"$repo\",\"repoName\":\"$repo_name\",\"startTime\":\"$start_time\",\
-  \"endTime\":\"\",\"status\":\"In progress\",\"progress\":{\"currentStep\":\"Predictive Model Generation\",\
-  \"nextStep\":\"None\",\"percent\":$progress},\
-  \"result\":{\"errorCode\":0,\"message\":\"\",\"repo\":\"\"}}" > $analysis_file
-
-for degree in ${poly_max_degree_vals[@]}
-do
-  fit.py --in-file speedup.json --out-file speedup-fitted-"$degree".json  --error-threshold 2 --poly-max-degree $degree
-done
-
-  progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=$fit_count; p + (bw/l)" | bc -l`
-
-  echo "{\"id\":\"$id\",\"repo\":\"$repo\",\"repoName\":\"$repo_name\",\"startTime\":\"$start_time\",\
-  \"endTime\":\"\",\"status\":\"In progress\",\"progress\":{\"currentStep\":\"Predictive Model Generation\",\
-  \"nextStep\":\"None\",\"percent\":$progress},\
-  \"result\":{\"errorCode\":0,\"message\":\"\",\"repo\":\"\"}}" > $analysis_file
-
-for degree in ${poly_max_degree_vals[@]}
-do
-  fit.py --in-file freeup.json --out-file freeup-fitted-"$degree".json  --error-threshold 2 --poly-max-degree $degree
-done
-
-  progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=$fit_count; p + (bw/l)" | bc -l`
-
-  echo "{\"id\":\"$id\",\"repo\":\"$repo\",\"repoName\":\"$repo_name\",\"startTime\":\"$start_time\",\
-  \"endTime\":\"\",\"status\":\"In progress\",\"progress\":{\"currentStep\":\"Predictive Model Generation\",\
-  \"nextStep\":\"None\",\"percent\":$progress},\
-  \"result\":{\"errorCode\":0,\"message\":\"\",\"repo\":\"\"}}" > $analysis_file
-
-for degree in ${poly_max_degree_vals[@]}
-do
-  fit.py --in-file powerup.json --out-file powerup-fitted-"$degree".json  --error-threshold 2 --poly-max-degree $degree
-done
-
-  progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=$fit_count; p + (bw/l)" | bc -l`
-
-  echo "{\"id\":\"$id\",\"repo\":\"$repo\",\"repoName\":\"$repo_name\",\"startTime\":\"$start_time\",\
-  \"endTime\":\"\",\"status\":\"In progress\",\"progress\":{\"currentStep\":\"Predictive Model Generation\",\
-  \"nextStep\":\"None\",\"percent\":$progress},\
-  \"result\":{\"errorCode\":0,\"message\":\"\",\"repo\":\"\"}}" > $analysis_file
-
-for degree in ${poly_max_degree_vals[@]}
-do
-  fit.py --in-file energyup.json --out-file energyup-fitted-"$degree".json  --error-threshold 2 --poly-max-degree $degree
-done
-
-  progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=$fit_count; p + (bw/l)" | bc -l`
-
-  echo "{\"id\":\"$id\",\"repo\":\"$repo\",\"repoName\":\"$repo_name\",\"startTime\":\"$start_time\",\
-  \"endTime\":\"\",\"status\":\"In progress\",\"progress\":{\"currentStep\":\"Predictive Model Generation\",\
-  \"nextStep\":\"None\",\"percent\":$progress},\
-  \"result\":{\"errorCode\":0,\"message\":\"\",\"repo\":\"\"}}" > $analysis_file
 
 # time serial
 
 extn="${time_serial_analytics_file##*.}"
 noextn="${time_serial_analytics_file%.*}"
 
-for degree in ${poly_max_degree_vals[@]}
-do
-  time_serial_analytics_file_d="$noextn"-"$degree"."$extn"
+time_serial_analytics_file_d="$noextn"."$extn"
 
-  jo -p \
-  iva=$(jo data=$(jo -a ${iva[@]}) name=$iva_name unit=size) \
-  measurements=$(jo data=$(jo -a ${time_serial[@]}) name=time unit=seconds) \
-  predictions=$(jo data="`jq '.fitted_measurements' time-serial-fitted-"$degree".json`" name=time unit=seconds) \
-  polynomial="`jq '.polynomial' time-serial-fitted-"$degree".json`" \
-  maxError="`jq '.max_error' time-serial-fitted-"$degree".json`" \
-  rSquared="`jq '.r_squared' time-serial-fitted-"$degree".json`" \
-  > $time_serial_analytics_file_d
-done
+jo -p \
+iva=$(jo data=$(jo -a ${iva[@]}) name=$iva_name unit=size) \
+measurements=$(jo data=$(jo -a ${time_serial[@]}) name=time unit=seconds) \
+fitted=$(jo data="`jq '.fitted' time-serial-fitted.json`" name=time unit=seconds) \
+fit_method="`jq -r '.method' time-serial-fitted.json`" \
+mse="`jq '.mse' time-serial-fitted.json`" \
+> $time_serial_analytics_file_d
 
 # time parallel
 extn="${time_parallel_analytics_file##*.}"
 noextn="${time_parallel_analytics_file%.*}"
 
-for degree in ${poly_max_degree_vals[@]}
-do
-  time_parallel_analytics_file_d="$noextn"-"$degree"."$extn"
+time_parallel_analytics_file_d="$noextn"."$extn"
 
-  jo -p \
-  iva=$(jo data=$(jo -a ${core[@]}) name=core unit=count) \
-  measurements=$(jo data=$(jo -a ${time_parallel[@]}) name=time unit=seconds) \
-  predictions=$(jo data="`jq '.fitted_measurements' time-parallel-fitted-"$degree".json`" name=time unit=seconds) \
-  polynomial="`jq '.polynomial' time-parallel-fitted-"$degree".json`" \
-  maxError="`jq '.max_error' time-parallel-fitted-"$degree".json`" \
-  rSquared="`jq '.r_squared' time-parallel-fitted-"$degree".json`" \
-  > $time_parallel_analytics_file_d
-done
+jo -p \
+iva=$(jo data=$(jo -a ${core[@]}) name=core unit=count) \
+measurements=$(jo data=$(jo -a ${time_parallel[@]}) name=time unit=seconds) \
+fitted=$(jo data="`jq '.fitted' time-parallel-fitted.json`" name=time unit=seconds) \
+fit_method="`jq -r '.method' time-parallel-fitted.json`" \
+mse="`jq '.mse' time-parallel-fitted.json`" \
+> $time_parallel_analytics_file_d
 
 # memory serial
 extn="${space_serial_analytics_file##*.}"
 noextn="${space_serial_analytics_file%.*}"
 
-for degree in ${poly_max_degree_vals[@]}
-do
-  space_serial_analytics_file_d="$noextn"-"$degree"."$extn"
+space_serial_analytics_file_d="$noextn"."$extn"
 
-  jo -p \
-  iva=$(jo data=$(jo -a ${iva[@]}) name=$iva_name unit=size) \
-  measurements=$(jo data=$(jo -a ${space_serial[@]}) name=memory unit=MB) \
-  predictions=$(jo data="`jq '.fitted_measurements' space-serial-fitted-"$degree".json`" name=memory unit=MB) \
-  polynomial="`jq '.polynomial' space-serial-fitted-"$degree".json`" \
-  maxError="`jq '.max_error' space-serial-fitted-"$degree".json`" \
-  rSquared="`jq '.r_squared' space-serial-fitted-"$degree".json`" \
-  > $space_serial_analytics_file_d
-done
+jo -p \
+iva=$(jo data=$(jo -a ${iva[@]}) name=$iva_name unit=size) \
+measurements=$(jo data=$(jo -a ${space_serial[@]}) name=memory unit=MB) \
+fitted=$(jo data="`jq '.fitted' space-serial-fitted.json`" name=memory unit=MB) \
+fit_method=`jq -r '.method' space-serial-fitted.json` \
+mse="`jq '.mse' space-serial-fitted.json`" \
+> $space_serial_analytics_file_d
 
 # memory parallel
 extn="${space_parallel_analytics_file##*.}"
 noextn="${space_parallel_analytics_file%.*}"
 
-for degree in ${poly_max_degree_vals[@]}
-do
-  space_parallel_analytics_file_d="$noextn"-"$degree"."$extn"
+space_parallel_analytics_file_d="$noextn"."$extn"
 
-  jo -p \
-  iva=$(jo data=$(jo -a ${core[@]}) name=core unit=count) \
-  measurements=$(jo data=$(jo -a ${space_parallel[@]}) name=memory unit=MB) \
-  predictions=$(jo data="`jq '.fitted_measurements' space-parallel-fitted-"$degree".json`" name=memory unit=MB) \
-  polynomial="`jq '.polynomial' space-parallel-fitted-"$degree".json`" \
-  maxError="`jq '.max_error' space-parallel-fitted-"$degree".json`" \
-  rSquared="`jq '.r_squared' space-parallel-fitted-"$degree".json`" \
-  > $space_parallel_analytics_file_d
-done
+jo -p \
+iva=$(jo data=$(jo -a ${core[@]}) name=core unit=count) \
+measurements=$(jo data=$(jo -a ${space_parallel[@]}) name=memory unit=MB) \
+fitted=$(jo data="`jq '.fitted' space-parallel-fitted.json`" name=memory unit=MB) \
+fit_method=`jq -r '.method' space-parallel-fitted.json` \
+mse="`jq '.mse' space-parallel-fitted.json`" \
+> $space_parallel_analytics_file_d
 
 # power serial
 extn="${power_serial_analytics_file##*.}"
 noextn="${power_serial_analytics_file%.*}"
 
-for degree in ${poly_max_degree_vals[@]}
-do
-  power_serial_analytics_file_d="$noextn"-"$degree"."$extn"
+power_serial_analytics_file_d="$noextn"."$extn"
 
-  jo -p \
-  iva=$(jo data=$(jo -a ${iva[@]}) name=$iva_name unit=size) \
-  measurements=$(jo data=$(jo -a ${power_serial[@]}) name=power unit="watts") \
-  predictions=$(jo data="`jq '.fitted_measurements' power-serial-fitted-"$degree".json`" name=power unit="watts") \
-  polynomial="`jq '.polynomial' power-serial-fitted-"$degree".json`" \
-  maxError="`jq '.max_error' power-serial-fitted-"$degree".json`" \
-  rSquared="`jq '.r_squared' power-serial-fitted-"$degree".json`" \
-  > $power_serial_analytics_file_d
-done
+jo -p \
+iva=$(jo data=$(jo -a ${iva[@]}) name=$iva_name unit=size) \
+measurements=$(jo data=$(jo -a ${power_serial[@]}) name=power unit="watts") \
+fitted=$(jo data="`jq '.fitted' power-serial-fitted.json`" name=power unit="watts") \
+fit_method="`jq -r '.method' power-serial-fitted.json`" \
+mse="`jq '.mse' power-serial-fitted.json`" \
+> $power_serial_analytics_file_d
 
 # power parallel
 extn="${power_parallel_analytics_file##*.}"
 noextn="${power_parallel_analytics_file%.*}"
 
-for degree in ${poly_max_degree_vals[@]}
-do
-  power_parallel_analytics_file_d="$noextn"-"$degree"."$extn"
+power_parallel_analytics_file_d="$noextn"."$extn"
 
-  jo -p \
-  iva=$(jo data=$(jo -a ${core[@]}) name=core unit=count) \
-  measurements=$(jo data=$(jo -a ${power_parallel[@]}) name=power unit="watts") \
-  predictions=$(jo data="`jq '.fitted_measurements' power-parallel-fitted-"$degree".json`" name=power unit="watts") \
-  polynomial="`jq '.polynomial' power-parallel-fitted-"$degree".json`" \
-  piecewise="`jq '.piecewise' power-parallel-fitted-"$degree".json`" \
-  maxError="`jq '.max_error' power-parallel-fitted-"$degree".json`" \
-  rSquared="`jq '.r_squared' power-parallel-fitted-"$degree".json`" \
-  > $power_parallel_analytics_file_d
-done
+jo -p \
+iva=$(jo data=$(jo -a ${core[@]}) name=core unit=count) \
+measurements=$(jo data=$(jo -a ${power_parallel[@]}) name=power unit="watts") \
+fitted=$(jo data="`jq '.fitted' power-parallel-fitted.json`" name=power unit="watts") \
+fit_method="`jq -r '.method' power-parallel-fitted.json`" \
+mse="`jq '.mse' power-parallel-fitted.json`" \
+> $power_parallel_analytics_file_d
 
 # energy serial
 extn="${energy_serial_analytics_file##*.}"
 noextn="${energy_serial_analytics_file%.*}"
 
-for degree in ${poly_max_degree_vals[@]}
-do
-  energy_serial_analytics_file_d="$noextn"-"$degree"."$extn"
+energy_serial_analytics_file_d="$noextn"."$extn"
 
-  jo -p \
-  iva=$(jo data=$(jo -a ${iva[@]}) name=$iva_name unit=size) \
-  measurements=$(jo data=$(jo -a ${energy_serial[@]}) name=energy unit="watt-seconds") \
-  predictions=$(jo data="`jq '.fitted_measurements' energy-serial-fitted-"$degree".json`" name=energy unit="watt-seconds") \
-  polynomial="`jq '.polynomial' energy-serial-fitted-"$degree".json`" \
-  maxError="`jq '.max_error' energy-serial-fitted-"$degree".json`" \
-  rSquared="`jq '.r_squared' energy-serial-fitted-"$degree".json`" \
-  > $energy_serial_analytics_file_d
-done
+jo -p \
+iva=$(jo data=$(jo -a ${iva[@]}) name=$iva_name unit=size) \
+measurements=$(jo data=$(jo -a ${energy_serial[@]}) name=energy unit="watt-seconds") \
+fitted=$(jo data="`jq '.fitted' energy-serial-fitted.json`" name=energy unit="watt-seconds") \
+fit_method="`jq -r '.method' energy-serial-fitted.json`" \
+mse="`jq '.mse' energy-serial-fitted.json`" \
+> $energy_serial_analytics_file_d
 
 # energy parallel
 extn="${energy_parallel_analytics_file##*.}"
 noextn="${energy_parallel_analytics_file%.*}"
 
-for degree in ${poly_max_degree_vals[@]}
-do
-  energy_parallel_analytics_file_d="$noextn"-"$degree"."$extn"
+energy_parallel_analytics_file_d="$noextn"."$extn"
 
-  jo -p \
-  iva=$(jo data=$(jo -a ${core[@]}) name=core unit=count) \
-  measurements=$(jo data=$(jo -a ${energy_parallel[@]}) name=energy unit="watt-seconds") \
-  predictions=$(jo data="`jq '.fitted_measurements' energy-parallel-fitted-"$degree".json`" name=energy unit="watt-seconds") \
-  polynomial="`jq '.polynomial' energy-parallel-fitted-"$degree".json`" \
-  maxError="`jq '.max_error' energy-parallel-fitted-"$degree".json`" \
-  rSquared="`jq '.r_squared' energy-parallel-fitted-"$degree".json`" \
-  > $energy_parallel_analytics_file_d
-done
+jo -p \
+iva=$(jo data=$(jo -a ${core[@]}) name=core unit=count) \
+measurements=$(jo data=$(jo -a ${energy_parallel[@]}) name=energy unit="watt-seconds") \
+fitted=$(jo data="`jq '.fitted' energy-parallel-fitted.json`" name=energy unit="watt-seconds") \
+fit_method="`jq -r '.method' energy-parallel-fitted.json`" \
+mse="`jq '.mse' energy-parallel-fitted.json`" \
+> $energy_parallel_analytics_file_d
 
 # speedup
 extn="${speedup_analytics_file##*.}"
 noextn="${speedup_analytics_file%.*}"
 
-for degree in ${poly_max_degree_vals[@]}
-do
-  speedup_analytics_file_d="$noextn"-"$degree"."$extn"
+speedup_analytics_file_d="$noextn"."$extn"
 
-  jo -p \
-  iva=$(jo data=$(jo -a ${core[@]}) name=core unit=count) \
-  measurements=$(jo data=$(jo -a ${speedup[@]}) name='T1/Tcore' unit='') \
-  predictions=$(jo data="`jq '.fitted_measurements' speedup-fitted-"$degree".json`" name='T1/Tcore' unit='') \
-  polynomial="`jq '.polynomial' speedup-fitted-"$degree".json`" \
-  maxError="`jq '.max_error' speedup-fitted-"$degree".json`" \
-  rSquared="`jq '.r_squared' speedup-fitted-"$degree".json`" \
-  > $speedup_analytics_file_d
-done
+jo -p \
+iva=$(jo data=$(jo -a ${core[@]}) name=core unit=count) \
+measurements=$(jo data=$(jo -a ${speedup[@]}) name='T1/Tcore' unit='') \
+fitted=$(jo data="`jq '.fitted' speedup-fitted.json`" name='T1/Tcore' unit='') \
+fit_method="`jq -r '.method' speedup-fitted.json`" \
+mse="`jq '.mse' speedup-fitted.json`" \
+> $speedup_analytics_file_d
 
 # freeup
 extn="${freeup_analytics_file##*.}"
 noextn="${freeup_analytics_file%.*}"
 
-for degree in ${poly_max_degree_vals[@]}
-do
-  freeup_analytics_file_d="$noextn"-"$degree"."$extn"
+freeup_analytics_file_d="$noextn"."$extn"
 
-  jo -p \
-  iva=$(jo data=$(jo -a ${core[@]}) name=core unit=count) \
-  measurements=$(jo data=$(jo -a ${freeup[@]}) name='S1/Score' unit='') \
-  predictions=$(jo data="`jq '.fitted_measurements' freeup-fitted-"$degree".json`" name='S1/Score' unit='') \
-  polynomial="`jq '.polynomial' freeup-fitted-"$degree".json`" \
-  maxError="`jq '.max_error' freeup-fitted-"$degree".json`" \
-  r_squared="`jq '.r_squared' freeup-fitted-"$degree".json`" \
-  > $freeup_analytics_file_d
-done
+jo -p \
+iva=$(jo data=$(jo -a ${core[@]}) name=core unit=count) \
+measurements=$(jo data=$(jo -a ${freeup[@]}) name='S1/Score' unit='') \
+fitted=$(jo data="`jq '.fitted' freeup-fitted.json`" name='S1/Score' unit='') \
+fit_method="`jq -r '.method' freeup-fitted.json`" \
+mse="`jq '.mse' freeup-fitted.json`" \
+> $freeup_analytics_file_d
 
 # powerup
 extn="${powerup_analytics_file##*.}"
 noextn="${powerup_analytics_file%.*}"
 
-for degree in ${poly_max_degree_vals[@]}
-do
-  powerup_analytics_file_d="$noextn"-"$degree"."$extn"
+powerup_analytics_file_d="$noextn"."$extn"
 
-  jo -p \
-  iva=$(jo data=$(jo -a ${core[@]}) name=core unit=count) \
-  measurements=$(jo data=$(jo -a ${powerup[@]}) name='PowerEfficiency(P1/Pcore)' unit='') \
-  predictions=$(jo data="`jq '.fitted_measurements' powerup-fitted-"$degree".json`" name='PowerEfficiency(P1/Pcore)' unit='') \
-  polynomial="`jq '.polynomial' powerup-fitted-"$degree".json`" \
-  piecewise="`jq '.piecewise' powerup-fitted-"$degree".json`" \
-  maxError="`jq '.max_error' powerup-fitted-"$degree".json`" \
-  rSquared="`jq '.r_squared' powerup-fitted-"$degree".json`" \
-  > $powerup_analytics_file_d
-done
+jo -p \
+iva=$(jo data=$(jo -a ${core[@]}) name=core unit=count) \
+measurements=$(jo data=$(jo -a ${powerup[@]}) name='PowerEfficiency(P1/Pcore)' unit='') \
+fitted=$(jo data="`jq '.fitted' powerup-fitted.json`" name='PowerEfficiency(P1/Pcore)' unit='') \
+fit_method="`jq -r '.method' powerup-fitted.json`" \
+mse="`jq '.mse' powerup-fitted.json`" \
+> $powerup_analytics_file_d
 
 # energyup
 extn="${energyup_analytics_file##*.}"
 noextn="${energyup_analytics_file%.*}"
 
-for degree in ${poly_max_degree_vals[@]}
-do
-  energyup_analytics_file_d="$noextn"-"$degree"."$extn"
+energyup_analytics_file_d="$noextn"."$extn"
 
-  jo -p \
-  iva=$(jo data=$(jo -a ${core[@]}) name=core unit=count) \
-  measurements=$(jo data=$(jo -a ${energyup[@]}) name='EnergyEfficiency(E1/Ecore)' unit='') \
-  predictions=$(jo data="`jq '.fitted_measurements' energyup-fitted-"$degree".json`" name='EnergyEfficiency(E1/Ecore)' unit='') \
-  polynomial="`jq '.polynomial' energyup-fitted-"$degree".json`" \
-  piecewise="`jq '.piecewise' energyup-fitted-"$degree".json`" \
-  maxError="`jq '.max_error' energyup-fitted-"$degree".json`" \
-  rSquared="`jq '.r_squared' energyup-fitted-"$degree".json`" \
-  > $energyup_analytics_file_d
-done
-
+jo -p \
+iva=$(jo data=$(jo -a ${core[@]}) name=core unit=count) \
+measurements=$(jo data=$(jo -a ${energyup[@]}) name='EnergyEfficiency(E1/Ecore)' unit='') \
+fitted=$(jo data="`jq '.fitted' energyup-fitted.json`" name='EnergyEfficiency(E1/Ecore)' unit='') \
+fit_method="`jq -r '.method' energyup-fitted.json`" \
+mse="`jq '.mse' energyup-fitted.json`" \
+> $energyup_analytics_file_d
