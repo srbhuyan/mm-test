@@ -2,7 +2,7 @@
 
 usage()
 {
-  echo "Usage: $0 <algorithm> <iva> <iva data> <iva data file> <core count file> <power profile file> <time serial analytics file> <time parallel analytics file> <space serial analytics file> <space parallel analytics file> <power serial analytics file> <power parallel analytics file> <energy serial analytics file> <energy parallel analytics file> <speedup analytics file> <freeup analytics file> <powerup analytics file> <energyup analytics file> <id> <repo> <repo name> <start time> <progress>"
+  echo "Usage: $0 <algorithm> <iva> <iva data> <iva data file> <core count file> <power profile file> <time serial analytics file> <time parallel analytics file> <time parallel slow analytics file> <space serial analytics file> <space parallel analytics file> <power serial analytics file> <power parallel analytics file> <energy serial analytics file> <energy parallel analytics file> <speedup analytics file> <freeup analytics file> <powerup analytics file> <energyup analytics file> <id> <repo> <repo name> <start time> <progress>"
   exit 1
 }
 
@@ -28,8 +28,8 @@ call_fit() {
   \"result\":{\"errorCode\":0,\"message\":\"\",\"repo\":\"\"}}" > $analysis_file
 }
 
-if [ "$#" -ne 29 ]; then
-    echo "Invalid number of parameters. Expected:29 Passed:$#"
+if [ "$#" -ne 30 ]; then
+    echo "Invalid number of parameters. Expected:30 Passed:$#"
     usage
 fi
 
@@ -47,24 +47,26 @@ core_count_file=${11}
 power_profile_file=${12}
 time_serial_analytics_file=${13}
 time_parallel_analytics_file=${14}
-space_serial_analytics_file=${15}
-space_parallel_analytics_file=${16}
-power_serial_analytics_file=${17}
-power_parallel_analytics_file=${18}
-energy_serial_analytics_file=${19}
-energy_parallel_analytics_file=${20}
-speedup_analytics_file=${21}
-freeup_analytics_file=${22}
-powerup_analytics_file=${23}
-energyup_analytics_file=${24}
-id=${25}
-repo=${26}
-repo_name=${27}
-start_time=${28}
-progress=${29}
+time_parallel_slow_analytics_file=${15}
+space_serial_analytics_file=${16}
+space_parallel_analytics_file=${17}
+power_serial_analytics_file=${18}
+power_parallel_analytics_file=${19}
+energy_serial_analytics_file=${20}
+energy_parallel_analytics_file=${21}
+speedup_analytics_file=${22}
+freeup_analytics_file=${23}
+powerup_analytics_file=${24}
+energyup_analytics_file=${25}
+id=${26}
+repo=${27}
+repo_name=${28}
+start_time=${29}
+progress=${30}
 
 serial_measurement=serial.csv
 parallel_measurement=parallel.csv
+parallel_slow_measurement=parallel_slow.csv
 analysis_file=analysis.json
 
 # parallel code generation config
@@ -74,26 +76,11 @@ parallel_plugin_name=rew
 echo "cleaning up"
 
 # cleanup
-#rm $time_serial_analytics_file 2> /dev/null
-#rm $time_parallel_analytics_file 2> /dev/null
-#rm $space_serial_analytics_file 2> /dev/null
-#rm $space_parallel_analytics_file 2> /dev/null
-#rm $power_serial_analytics_file 2> /dev/null
-#rm $power_parallel_analytics_file 2> /dev/null
-#rm $energy_serial_analytics_file 2> /dev/null
-#rm $energy_parallel_analytics_file 2> /dev/null
-#rm $speedup_analytics_file 2> /dev/null
-#rm $freeup_analytics_file 2> /dev/null
-#rm $powerup_analytics_file 2> /dev/null
-#rm $energyup_analytics_file 2> /dev/null
-#rm $serial_measurement 2> /dev/null
-#rm $parallel_measurement 2> /dev/null
-
-rm -f $time_serial_analytics_file $time_parallel_analytics_file $space_serial_analytics_file \
+rm -f $time_serial_analytics_file $time_parallel_analytics_file $time_parallel_slow_analytics_file $space_serial_analytics_file \
    $space_parallel_analytics_file $power_serial_analytics_file $power_parallel_analytics_file \
    $energy_serial_analytics_file $energy_parallel_analytics_file $speedup_analytics_file \
    $freeup_analytics_file $powerup_analytics_file $energyup_analytics_file \
-   $serial_measurement $parallel_measurement
+   $serial_measurement $parallel_measurement $parallel_slow_measurement
 
 echo "cleanup done"
 
@@ -215,7 +202,7 @@ done
 # serial measurement file
 for i in "${!iva[@]}"
 do
-  echo "${iva[i]},${time_serial[i]},${memory_serial[i]},${power_serial[i]},${energy_serial[i]}" >> "$serial_measurement"
+  echo "${iva[i]},${time_serial[i]},${space_serial[i]},${power_serial[i]},${energy_serial[i]}" >> "$serial_measurement"
 done
 
 # parallel run
@@ -225,6 +212,9 @@ space_parallel=()
 power_parallel=()
 energy_parallel=()
 
+# Add new parallel slow measurement arrays
+time_parallel_slow=()
+
 # time - parallel
 progress_bandwidth=10
 
@@ -232,7 +222,6 @@ for i in ${core[@]}
 do
   # time
   start=`date +%s.%N`;\
-  #  ./$algo $iva_data $iva_data $i;\
   curl -D - --header "Content-Type: application/json" --output - --request POST --data '{"id": 1, "lib": "libmm.so", "core": '"$i"', "argv": ["main", '\""$iva_data"\"','\""$iva_data"\"']}' 192.168.1.36:8092/run;\
   end=`date +%s.%N`;\
   time_parallel+=(`printf '%.8f' $( echo "$end - $start" | bc -l )`);
@@ -241,9 +230,27 @@ do
 
   echo "{\"id\":\"$id\",\"repo\":\"$repo\",\"repoName\":\"$repo_name\",\"startTime\":\"$start_time\",\
   \"endTime\":\"\",\"status\":\"In progress\",\"progress\":{\"currentStep\":\"Parallel Time Measurement\",\
+  \"nextStep\":\"Parallel Slow Time Measurement\",\"percent\":$progress},\
+  \"result\":{\"errorCode\":0,\"message\":\"\",\"repo\":\"\"}}" > $analysis_file
+done
+
+# time - parallel slow
+progress_bandwidth=10
+
+for i in ${core[@]}
+do
+  # time using direct execution
+  start=`date +%s.%N`;\
+  ./$algo $iva_data $iva_data $i;\
+  end=`date +%s.%N`;\
+  time_parallel_slow+=(`printf '%.8f' $( echo "$end - $start" | bc -l )`);
+
+  progress=`echo "scale=1; p=$progress; bw=$progress_bandwidth; l=${#core[@]}; p + (bw/l)" | bc -l`
+
+  echo "{\"id\":\"$id\",\"repo\":\"$repo\",\"repoName\":\"$repo_name\",\"startTime\":\"$start_time\",\
+  \"endTime\":\"\",\"status\":\"In progress\",\"progress\":{\"currentStep\":\"Parallel Slow Time Measurement\",\
   \"nextStep\":\"Parallel Memory Measurement\",\"percent\":$progress},\
   \"result\":{\"errorCode\":0,\"message\":\"\",\"repo\":\"\"}}" > $analysis_file
-
 done
 
 # memory - parallel
@@ -292,7 +299,13 @@ done
 # parallel measurement file
 for i in "${!core[@]}"
 do
-  echo "${core[i]},${time_parallel[i]},${memory_parallel[i]},${power_parallel[i]},${energy_parallel[i]}" >> "$parallel_measurement"
+  echo "${core[i]},${time_parallel[i]},${space_parallel[i]},${power_parallel[i]},${energy_parallel[i]}" >> "$parallel_measurement"
+done
+
+# parallel slow measurement file
+for i in "${!core[@]}"
+do
+  echo "${core[i]},${time_parallel_slow[i]}" >> "$parallel_slow_measurement"
 done
 
 # data prep
@@ -346,6 +359,8 @@ jo -p iva=$(jo name=$iva_name values=$(jo -a ${iva[@]})) \
 measurements=$(jo -a ${time_serial[@]}) > time-serial.json
 jo -p iva=$(jo name=core values=$(jo -a ${core[@]})) \
 measurements=$(jo -a ${time_parallel[@]}) > time-parallel.json
+jo -p iva=$(jo name=core values=$(jo -a ${core[@]})) \
+measurements=$(jo -a ${time_parallel_slow[@]}) > time-parallel-slow.json
 jo -p iva=$(jo name=$iva_name values=$(jo -a ${iva[@]})) \
 measurements=$(jo -a ${space_serial[@]}) > space-serial.json
 jo -p iva=$(jo name=core values=$(jo -a ${core[@]})) \
@@ -370,7 +385,7 @@ measurements=$(jo -a ${energyup[@]}) > energyup.json
 # curve fitting
 
 progress_bandwidth=10
-fit_count=12
+fit_count=13
 analysis_types=('time-serial' 'time-parallel' 'space-serial' 'space-parallel' 'power-serial' 'power-parallel' 'energy-serial' 'energy-parallel' 'speedup' 'freeup' 'powerup' 'energyup')
 
 for i in "${analysis_types[@]}"
@@ -381,7 +396,6 @@ do
 done
 
 # time serial
-
 extn="${time_serial_analytics_file##*.}"
 noextn="${time_serial_analytics_file%.*}"
 
@@ -391,6 +405,7 @@ jo -p \
 iva=$(jo data=$(jo -a ${iva[@]}) name=$iva_name unit=size) \
 measurements=$(jo data=$(jo -a ${time_serial[@]}) name=time unit=seconds) \
 fitted=$(jo data="`jq '.fitted' time-serial-fitted.json`" name=time unit=seconds) \
+unoptimized=$(jo data=$(jo -a) name=time unit=seconds) \
 fit_method="`jq -r '.method' time-serial-fitted.json`" \
 mse="`jq '.mse' time-serial-fitted.json`" \
 > $time_serial_analytics_file_d
@@ -404,6 +419,7 @@ time_parallel_analytics_file_d="$noextn"."$extn"
 jo -p \
 iva=$(jo data=$(jo -a ${core[@]}) name=core unit=count) \
 measurements=$(jo data=$(jo -a ${time_parallel[@]}) name=time unit=seconds) \
+unoptimized=$(jo data=$(jo -a ${time_parallel_slow[@]}) name=time unit=seconds) \
 fitted=$(jo data="`jq '.fitted' time-parallel-fitted.json`" name=time unit=seconds) \
 fit_method="`jq -r '.method' time-parallel-fitted.json`" \
 mse="`jq '.mse' time-parallel-fitted.json`" \
@@ -418,8 +434,9 @@ space_serial_analytics_file_d="$noextn"."$extn"
 jo -p \
 iva=$(jo data=$(jo -a ${iva[@]}) name=$iva_name unit=size) \
 measurements=$(jo data=$(jo -a ${space_serial[@]}) name=memory unit=MB) \
+unoptimized=$(jo data=$(jo -a) name=memory unit=MB) \
 fitted=$(jo data="`jq '.fitted' space-serial-fitted.json`" name=memory unit=MB) \
-fit_method=`jq -r '.method' space-serial-fitted.json` \
+fit_method="`jq -r '.method' space-serial-fitted.json`" \
 mse="`jq '.mse' space-serial-fitted.json`" \
 > $space_serial_analytics_file_d
 
@@ -432,8 +449,9 @@ space_parallel_analytics_file_d="$noextn"."$extn"
 jo -p \
 iva=$(jo data=$(jo -a ${core[@]}) name=core unit=count) \
 measurements=$(jo data=$(jo -a ${space_parallel[@]}) name=memory unit=MB) \
+unoptimized=$(jo data=$(jo -a) name=memory unit=MB) \
 fitted=$(jo data="`jq '.fitted' space-parallel-fitted.json`" name=memory unit=MB) \
-fit_method=`jq -r '.method' space-parallel-fitted.json` \
+fit_method="`jq -r '.method' space-parallel-fitted.json`" \
 mse="`jq '.mse' space-parallel-fitted.json`" \
 > $space_parallel_analytics_file_d
 
@@ -446,6 +464,7 @@ power_serial_analytics_file_d="$noextn"."$extn"
 jo -p \
 iva=$(jo data=$(jo -a ${iva[@]}) name=$iva_name unit=size) \
 measurements=$(jo data=$(jo -a ${power_serial[@]}) name=power unit="watts") \
+unoptimized=$(jo data=$(jo -a) name=power unit="watts") \
 fitted=$(jo data="`jq '.fitted' power-serial-fitted.json`" name=power unit="watts") \
 fit_method="`jq -r '.method' power-serial-fitted.json`" \
 mse="`jq '.mse' power-serial-fitted.json`" \
@@ -461,6 +480,7 @@ jo -p \
 iva=$(jo data=$(jo -a ${core[@]}) name=core unit=count) \
 measurements=$(jo data=$(jo -a ${power_parallel[@]}) name=power unit="watts") \
 fitted=$(jo data="`jq '.fitted' power-parallel-fitted.json`" name=power unit="watts") \
+unoptimized=$(jo data=$(jo -a) name=power unit="watts") \
 fit_method="`jq -r '.method' power-parallel-fitted.json`" \
 mse="`jq '.mse' power-parallel-fitted.json`" \
 > $power_parallel_analytics_file_d
@@ -474,6 +494,7 @@ energy_serial_analytics_file_d="$noextn"."$extn"
 jo -p \
 iva=$(jo data=$(jo -a ${iva[@]}) name=$iva_name unit=size) \
 measurements=$(jo data=$(jo -a ${energy_serial[@]}) name=energy unit="watt-seconds") \
+unoptimized=$(jo data=$(jo -a) name=energy unit="watt-seconds") \
 fitted=$(jo data="`jq '.fitted' energy-serial-fitted.json`" name=energy unit="watt-seconds") \
 fit_method="`jq -r '.method' energy-serial-fitted.json`" \
 mse="`jq '.mse' energy-serial-fitted.json`" \
@@ -488,6 +509,7 @@ energy_parallel_analytics_file_d="$noextn"."$extn"
 jo -p \
 iva=$(jo data=$(jo -a ${core[@]}) name=core unit=count) \
 measurements=$(jo data=$(jo -a ${energy_parallel[@]}) name=energy unit="watt-seconds") \
+unoptimized=$(jo data=$(jo -a) name=energy unit="watt-seconds") \
 fitted=$(jo data="`jq '.fitted' energy-parallel-fitted.json`" name=energy unit="watt-seconds") \
 fit_method="`jq -r '.method' energy-parallel-fitted.json`" \
 mse="`jq '.mse' energy-parallel-fitted.json`" \
@@ -502,6 +524,7 @@ speedup_analytics_file_d="$noextn"."$extn"
 jo -p \
 iva=$(jo data=$(jo -a ${core[@]}) name=core unit=count) \
 measurements=$(jo data=$(jo -a ${speedup[@]}) name='T1/Tcore' unit='') \
+unoptimized=$(jo data=$(jo -a) name='T1/Tcore' unit='') \
 fitted=$(jo data="`jq '.fitted' speedup-fitted.json`" name='T1/Tcore' unit='') \
 fit_method="`jq -r '.method' speedup-fitted.json`" \
 mse="`jq '.mse' speedup-fitted.json`" \
@@ -516,6 +539,7 @@ freeup_analytics_file_d="$noextn"."$extn"
 jo -p \
 iva=$(jo data=$(jo -a ${core[@]}) name=core unit=count) \
 measurements=$(jo data=$(jo -a ${freeup[@]}) name='S1/Score' unit='') \
+unoptimized=$(jo data=$(jo -a) name='S1/Score' unit='') \
 fitted=$(jo data="`jq '.fitted' freeup-fitted.json`" name='S1/Score' unit='') \
 fit_method="`jq -r '.method' freeup-fitted.json`" \
 mse="`jq '.mse' freeup-fitted.json`" \
@@ -530,6 +554,7 @@ powerup_analytics_file_d="$noextn"."$extn"
 jo -p \
 iva=$(jo data=$(jo -a ${core[@]}) name=core unit=count) \
 measurements=$(jo data=$(jo -a ${powerup[@]}) name='PowerEfficiency(P1/Pcore)' unit='') \
+unoptimized=$(jo data=$(jo -a) name='PowerEfficiency(P1/Pcore)' unit='') \
 fitted=$(jo data="`jq '.fitted' powerup-fitted.json`" name='PowerEfficiency(P1/Pcore)' unit='') \
 fit_method="`jq -r '.method' powerup-fitted.json`" \
 mse="`jq '.mse' powerup-fitted.json`" \
@@ -544,6 +569,7 @@ energyup_analytics_file_d="$noextn"."$extn"
 jo -p \
 iva=$(jo data=$(jo -a ${core[@]}) name=core unit=count) \
 measurements=$(jo data=$(jo -a ${energyup[@]}) name='EnergyEfficiency(E1/Ecore)' unit='') \
+unoptimized=$(jo data=$(jo -a) name='EnergyEfficiency(E1/Ecore)' unit='') \
 fitted=$(jo data="`jq '.fitted' energyup-fitted.json`" name='EnergyEfficiency(E1/Ecore)' unit='') \
 fit_method="`jq -r '.method' energyup-fitted.json`" \
 mse="`jq '.mse' energyup-fitted.json`" \
