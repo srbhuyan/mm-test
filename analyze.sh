@@ -161,7 +161,7 @@ space_serial=()
 power_serial=()
 energy_serial=()
 
-repo_path="/app/data/repo_import/$repo_name"
+repo_path="/app/data/repo-import/$repo_name"
 
 if check_abort $repo_path; then exit 1; fi
 
