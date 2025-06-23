@@ -163,7 +163,7 @@ energy_serial=()
 
 repo_path="/app/data/repo-import/$repo_name"
 
-if check_abort $repo_path; then exit 1; fi
+if check_abort $repo_path; then exit 2; fi
 
 # time - serial
 progress_bandwidth=10
@@ -186,7 +186,7 @@ do
   \"result\":{\"errorCode\":0,\"message\":\"\",\"repo\":\"\"}}" > $analysis_file
 done
 
-if check_abort $repo_path; then exit 1; fi
+if check_abort $repo_path; then exit 2; fi
 
 # memory - serial
 progress_bandwidth=10
@@ -208,7 +208,7 @@ do
 
 done
 
-if check_abort $repo_path; then exit 1; fi
+if check_abort $repo_path; then exit 2; fi
 
 # power - serial
 progress_bandwidth=10
@@ -227,7 +227,7 @@ do
 
 done
 
-if check_abort $repo_path; then exit 1; fi
+if check_abort $repo_path; then exit 2; fi
 
 # energy - serial
 for i in "${!iva[@]}"
@@ -244,7 +244,7 @@ done
 
 # parallel run
 
-if check_abort $repo_path; then exit 1; fi
+if check_abort $repo_path; then exit 2; fi
 
 time_parallel=()
 space_parallel=()
@@ -273,7 +273,7 @@ do
   \"result\":{\"errorCode\":0,\"message\":\"\",\"repo\":\"\"}}" > $analysis_file
 done
 
-if check_abort $repo_path; then exit 1; fi
+if check_abort $repo_path; then exit 2; fi
 
 # time - parallel slow
 progress_bandwidth=10
@@ -294,7 +294,7 @@ do
   \"result\":{\"errorCode\":0,\"message\":\"\",\"repo\":\"\"}}" > $analysis_file
 done
 
-if check_abort $repo_path; then exit 1; fi
+if check_abort $repo_path; then exit 2; fi
 
 # memory - parallel
 progress_bandwidth=10
@@ -316,7 +316,7 @@ do
 
 done
 
-if check_abort $repo_path; then exit 1; fi
+if check_abort $repo_path; then exit 2; fi
 
 # power - parallel
 progress_bandwidth=10
@@ -334,7 +334,7 @@ do
   \"result\":{\"errorCode\":0,\"message\":\"\",\"repo\":\"\"}}" > $analysis_file
 done
 
-if check_abort $repo_path; then exit 1; fi
+if check_abort $repo_path; then exit 2; fi
 
 # energy - parallel
 for i in "${!core[@]}"
@@ -343,7 +343,7 @@ do
   energy_parallel+=(`echo "tm=${time_parallel[i]};pw=${power_parallel[i]};tm * pw" | bc`);
 done
 
-if check_abort $repo_path; then exit 1; fi
+if check_abort $repo_path; then exit 2; fi
 
 # parallel measurement file
 for i in "${!core[@]}"
@@ -351,7 +351,7 @@ do
   echo "${core[i]},${time_parallel[i]},${space_parallel[i]},${power_parallel[i]},${energy_parallel[i]}" >> "$parallel_measurement"
 done
 
-if check_abort $repo_path; then exit 1; fi
+if check_abort $repo_path; then exit 2; fi
 
 # parallel slow measurement file
 for i in "${!core[@]}"
@@ -359,7 +359,7 @@ do
   echo "${core[i]},${time_parallel_slow[i]}" >> "$parallel_slow_measurement"
 done
 
-if check_abort $repo_path; then exit 1; fi
+if check_abort $repo_path; then exit 2; fi
 
 # data prep
 for i in "${!space_serial[@]}"; do
@@ -435,7 +435,7 @@ measurements=$(jo -a ${powerup[@]}) > powerup.json
 jo -p iva=$(jo name=core values=$(jo -a ${core[@]})) \
 measurements=$(jo -a ${energyup[@]}) > energyup.json
 
-if check_abort $repo_path; then exit 1; fi
+if check_abort $repo_path; then exit 2; fi
 
 # curve fitting
 
