@@ -22,10 +22,10 @@ check_abort() {
   if [[ "$flag" == "1" || "$flag" == "true" || "$flag" == "abort" ]]; then
     echo "[$$] abort signal detected, terminating.."
 
-    # if [[ -d "$repo_path" ]]; then
-    #   rm -rf "$repo_path"
-    #   echo "[$$] Repository directory cleaned up : $repo_path"
-    # fi
+    if [[ -d "$repo_path" ]]; then
+      rm -rf "$repo_path"
+      echo "[$$] Repository directory cleaned up : $repo_path"
+    fi
 
     return 0
   fi
