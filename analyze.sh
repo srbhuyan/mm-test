@@ -142,14 +142,14 @@ make -f Makefile-serial
 main_file_extn="${main_file##*.}"
 main_file_noextn="${main_file%.*}"
 main_file_orig="$main_file_noextn"_original."$main_file_extn"
-cp $main_file $main_file_orig
+#cp $main_file $main_file_orig
 
 # make a copy of original execuatble
 algo_orig="$algo"_original
-mv $algo $algo_orig
+#mv $algo $algo_orig
 
 # generate TALP parallel code
-clang -fplugin=$parallel_plugin_so -Xclang -plugin -Xclang $parallel_plugin_name -Xclang -plugin-arg-rew -Xclang -target-function -Xclang -plugin-arg-rew -Xclang $target_fn -Xclang -plugin-arg-rew -Xclang -out-file -Xclang -plugin-arg-rew -Xclang $main_file -Xclang -plugin-arg-rew -Xclang -iva -Xclang -plugin-arg-rew -Xclang $target_fn_iva_name -Xclang -plugin-arg-rew -Xclang -iva-start -Xclang -plugin-arg-rew -Xclang $target_fn_iva_start -Xclang -plugin-arg-rew -Xclang -iva-end -Xclang -plugin-arg-rew -Xclang $target_fn_iva_end -Xclang -plugin-arg-rew -Xclang -argc -Xclang -plugin-arg-rew -Xclang $argc -c $main_file
+#clang -fplugin=$parallel_plugin_so -Xclang -plugin -Xclang $parallel_plugin_name -Xclang -plugin-arg-rew -Xclang -target-function -Xclang -plugin-arg-rew -Xclang $target_fn -Xclang -plugin-arg-rew -Xclang -out-file -Xclang -plugin-arg-rew -Xclang $main_file -Xclang -plugin-arg-rew -Xclang -iva -Xclang -plugin-arg-rew -Xclang $target_fn_iva_name -Xclang -plugin-arg-rew -Xclang -iva-start -Xclang -plugin-arg-rew -Xclang $target_fn_iva_start -Xclang -plugin-arg-rew -Xclang -iva-end -Xclang -plugin-arg-rew -Xclang $target_fn_iva_end -Xclang -plugin-arg-rew -Xclang -argc -Xclang -plugin-arg-rew -Xclang $argc -c $main_file
 
 # make - parallel
 make -f Makefile-parallel
@@ -261,7 +261,7 @@ for i in ${core[@]}
 do
   # time
   start=`date +%s.%N`;\
-  curl -D - --header "Content-Type: application/json" --output - --request POST --data '{"id": 1, "lib": "libmm.so", "core": '"$i"', "argv": ["main", '\""$iva_data"\"','\""$iva_data"\"']}' 192.168.1.36:8092/run;\
+  curl -D - --header "Content-Type: application/json" --output - --request POST --data '{"id": 1, "lib": "libmm.so", "core": '"$i"', "argv": ["main", '\""$iva_data"\"','\""$iva_data"\"','\""$i"\"']}' 192.168.1.36:8092/run;\
   end=`date +%s.%N`;\
   time_parallel+=(`printf '%.8f' $( echo "$end - $start" | bc -l )`);
 

@@ -92,11 +92,11 @@ void freeMatrix(double ** m, int r){
   free(m);
 }
 
-int main(int argc, char * argv[]){
+int main_worker(int argc, char * argv[]){
 
   if(argc < 3){
     printf("Usage: %s <row count> <column count> <num threads>\n", argv[0]);
-    exit(1);
+    return 1;
   }
 
   // Set number of threads (default to number of CPU cores)
@@ -107,7 +107,7 @@ int main(int argc, char * argv[]){
   }
 
   // Init thread pool
-  thpool = thpool_init(num_threads);
+  thpool = thpool_get_shared(num_threads);
 
   int r  = atoi(argv[1]);
   int c  = atoi(argv[2]);
@@ -133,7 +133,6 @@ int main(int argc, char * argv[]){
   print(b, r, c);
 
   mult_parallel(a, b, res, r, c);
-  thpool_destroy(thpool);
 
   print(res, r, c);
 
