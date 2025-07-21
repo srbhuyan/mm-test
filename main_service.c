@@ -2,7 +2,7 @@
 #include <stdlib.h>
 
 #include <unistd.h>
-#include <thpool.h>
+#include <thmgr.h>
 // ---- thread management code start ----
 
 int num_threads;
@@ -46,6 +46,7 @@ void mult_parallel(double ** a, double ** b, double ** res, int r, int c){
 
     thpool_add_work(thpool, *mult_worker, &row_data[i]);
   }
+
   thpool_wait(thpool);
 
   free(row_data);
@@ -106,8 +107,14 @@ int main_worker(int argc, char * argv[]){
     num_threads = sysconf(_SC_NPROCESSORS_ONLN);
   }
 
-  // Init thread pool
-  thpool = thpool_get_shared(num_threads);
+  // job id
+  if(argc <= 4) {
+    return 1;
+  }
+
+  // Get thread pool
+  char * jid = argv[4];
+  thpool = thpool_get_shared(jid);
 
   int r  = atoi(argv[1]);
   int c  = atoi(argv[2]);
@@ -142,3 +149,4 @@ int main_worker(int argc, char * argv[]){
 
   return 0;
 }
+
