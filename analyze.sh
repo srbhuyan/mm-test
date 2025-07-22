@@ -154,6 +154,9 @@ algo_orig="$algo"_original
 # make - parallel
 make -f Makefile-parallel
 
+# make - thread manager service
+make -f Makefile-thmgr repo_name=$repo_name lib_location=/data/build/default/data/lib
+
 # serial run
 
 time_serial=()
@@ -322,13 +325,21 @@ poll_api_until_condition() {
 
 api="http://192.168.1.36:8092"
 
+# lib load
+load_response=$(curl -s -X POST -H "Content-Type: application/json" -d @- $api/load <<EOF
+{
+  "repo": "$repo_name"
+}
+EOF
+)
+
+# lib run
 for i in ${core[@]}
 do
   # time
   run_response=$(curl -s -X POST -H "Content-Type: application/json" -d @- $api/run <<EOF
 {
-  "id": 1,
-  "lib": "libmm.so",
+  "repo": "$repo_name",
   "core": $i,
   "argv": ["main", "$iva_data", "$iva_data", "$i"]
 }
