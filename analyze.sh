@@ -93,6 +93,9 @@ progress=${30}
 thmgr_api=${31}
 thmgr_lib_dir=${32}
 
+echo "thmgr_api = $thmgr_api"
+echo "thmgr_lib_dir = $thmgr_lib_dir"
+
 serial_measurement=serial.csv
 parallel_measurement=parallel.csv
 parallel_slow_measurement=parallel_slow.csv
